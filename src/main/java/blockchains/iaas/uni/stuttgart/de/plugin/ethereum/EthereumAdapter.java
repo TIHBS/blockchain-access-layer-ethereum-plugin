@@ -11,7 +11,6 @@
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 
-import blockchains.iaas.uni.stuttgart.de.api.AbstractAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.*;
 import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.*;
