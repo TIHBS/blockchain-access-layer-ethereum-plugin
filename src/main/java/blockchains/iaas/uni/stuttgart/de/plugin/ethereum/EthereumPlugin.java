@@ -11,7 +11,7 @@
 
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
-import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtenstion;
+import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import org.pf4j.Extension;
 import org.pf4j.Plugin;
@@ -35,12 +35,12 @@ public class EthereumPlugin extends Plugin {
     }
 
     @Extension
-    public static class EthAdapterImpl implements IAdapterExtenstion {
+    public static class EthAdapterImpl implements IAdapterExtension {
 
         @Override
-        public BlockchainAdapter getAdapter(Map<String, String> parameters) {
-            String nodeUrl = parameters.get("nodeUrl");
-            int averageBlockTimeSeconds = Integer.parseInt(parameters.get("averageBlockTimeSeconds"));
+        public BlockchainAdapter getAdapter(Map<String, Object> parameters) {
+            String nodeUrl = (String) parameters.get("nodeUrl");
+            int averageBlockTimeSeconds = (int) parameters.get("averageBlockTimeSeconds");
             return new EthereumAdapter(nodeUrl, averageBlockTimeSeconds);
         }
 
