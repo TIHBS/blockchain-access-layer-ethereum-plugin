@@ -12,8 +12,10 @@
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
+import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.pf4j.Extension;
 import org.pf4j.Plugin;
 import org.pf4j.PluginWrapper;
@@ -41,13 +43,15 @@ public class EthereumPlugin extends Plugin {
     public static class EthAdapterImpl implements IAdapterExtension {
 
         @Override
-        public BlockchainAdapter getAdapter(Map<String, Object> parameters) {
-            String nodeUrl = (String) parameters.get("nodeUrl");
-            String keystorePassword = (String) parameters.get("keystorePassword");
-            String keystorePath = (String) parameters.get("keystorePath");
-            double adversaryVotingRatio = (double) parameters.get("adversaryVotingRatio");
+        public BlockchainAdapter getAdapter(AbstractConnectionProfile connectionProfile) {
+            EthereumConnectionProfile ethereumConnectionProfile = (EthereumConnectionProfile) connectionProfile;
 
-            int pollingTimeSeconds = (int) parameters.get("pollingTimeSeconds");
+            String nodeUrl = ethereumConnectionProfile.getNodeUrl();
+            int pollingTimeSeconds = ethereumConnectionProfile.getPollingTimeSeconds();
+            double adversaryVotingRatio = ethereumConnectionProfile.getAdversaryVotingRatio();
+            String keystorePassword = ethereumConnectionProfile.getKeystorePassword();
+            String keystorePath = ethereumConnectionProfile.getKeystorePath();
+
             final EthereumAdapter adapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds);
 
             final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
@@ -61,6 +65,16 @@ public class EthereumPlugin extends Plugin {
 
             adapter.setConfidenceCalculator(cCalc);
             return adapter;
+        }
+
+        @Override
+        public Class<? extends AbstractConnectionProfile> getConnectionProfileClass() {
+            return EthereumConnectionProfile.class;
+        }
+
+        @Override
+        public String getConnectionProfileNamedType() {
+            return "ethereum";
         }
 
         @Override
