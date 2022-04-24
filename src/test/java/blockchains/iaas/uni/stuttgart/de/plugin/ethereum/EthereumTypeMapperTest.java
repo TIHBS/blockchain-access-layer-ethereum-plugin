@@ -13,13 +13,8 @@ package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.web3j.abi.datatypes.Address;
-import org.web3j.abi.datatypes.DynamicBytes;
-import org.web3j.abi.datatypes.Type;
-import org.web3j.abi.datatypes.Utf8String;
-import org.web3j.abi.datatypes.generated.Bytes8;
-import org.web3j.abi.datatypes.generated.Int160;
-import org.web3j.abi.datatypes.generated.Uint160;
+import org.web3j.abi.datatypes.*;
+import org.web3j.abi.datatypes.generated.*;
 
 class EthereumTypeMapperTest {
     @Test
@@ -72,6 +67,14 @@ class EthereumTypeMapperTest {
                 "}";
         result = EthereumTypeMapper.getEthereumType(bytes);
         Assertions.assertEquals(DynamicBytes.class, result);
+
+        final String uint256Type = "{\n" +
+                "\t\"type\": \"integer\",\n" +
+                " \t\"minimum\": 0,\n" +
+                " \t\"maximum\": 115792089237316195423570985008687907853269984665640564039457584007913129639935\n" +
+                "}";
+        result = EthereumTypeMapper.getEthereumType(uint256Type);
+        Assertions.assertEquals(Uint256.class, result);
     }
 
 }
