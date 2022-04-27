@@ -44,7 +44,6 @@ import org.web3j.tx.gas.DefaultGasProvider;
  * smart contract composition
  */
 class EthereumAdapterTest {
-    private static final String NETWORK_NAME = "eth-0";
     private static final String MESSAGE = "This was not a difficult task!";
     private final String BYTES_TYPE = "{\n" +
             "\t\"type\": \"array\",\n" +
@@ -57,7 +56,7 @@ class EthereumAdapterTest {
             "\t\"type\": \"string\",\n" +
             "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
             "}";
-    private static final double REQUIRED_CONFIDENCE = 0.01;
+    private static final double REQUIRED_CONFIDENCE = 0.6;
     private EthereumAdapter adapter;
     private static final Logger log = LoggerFactory.getLogger(EthereumAdapterTest.class);
 
@@ -88,7 +87,7 @@ class EthereumAdapterTest {
         String argument = new BigInteger(bytes).toString(16);
         List<Parameter> inputs = Collections.singletonList(new Parameter("publicKey", BYTES_TYPE, argument));
         List<Parameter> outputs = Collections.emptyList();
-        LinearChainTransaction init = (LinearChainTransaction) this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE, 100000000).get();
+        LinearChainTransaction init = (LinearChainTransaction) this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE, Long.MAX_VALUE).get();
         log.info("initial transaction {}", init.getTransactionHash());
         functionIdentifier = "getPublicKey";
         inputs = Collections.singletonList(new Parameter("ethereumAddress", ADDRESS_TYPE, "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A"));
@@ -146,9 +145,7 @@ class EthereumAdapterTest {
     }
 
     private EthereumAdapter getAdapter() {
-        //String nodeUrl = "http://localhost:7545/";
-        String nodeUrl = "https://rinkeby.infura.io/v3/cafcfb3fc02f4322be11087aad15989c";
-
+        String nodeUrl = "http://localhost:7545/";
         String keystorePath = "/account.json";
         String keystorePassword = "123456789";
         double adversaryVotingRatio = 0.2;
