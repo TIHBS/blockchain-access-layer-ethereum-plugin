@@ -45,6 +45,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.OkHttpClient;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
@@ -306,13 +307,18 @@ public class EthereumAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public CompletableFuture<Transaction> invokeSmartContract(
-            String smartContractPath,
-            String functionIdentifier,
-            List<Parameter> inputs,
-            List<Parameter> outputs,
-            double requiredConfidence,
-            long timeoutMillis
+    public CompletableFuture<Transaction> invokeSmartContract(String smartContractPath,
+                                                              String functionIdentifier,
+                                                              List<String> typeArguments,
+                                                              List<Parameter> inputs,
+                                                              List<Parameter> outputs,
+                                                              double requiredConfidence,
+                                                              long timeoutMillis,
+                                                              String signature,
+                                                              String signer,
+                                                              List<String> signers,
+                                                              List<ImmutablePair<String, String>> signatures,
+                                                              long minimumNumberOfSignatures
     ) throws NotSupportedException, ParameterException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
@@ -399,7 +405,7 @@ public class EthereumAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier,
+    public CompletableFuture<QueryResult> queryEvents(String smartContractAddress, String eventIdentifier, List<String> typeArguments,
                                                       List<Parameter> outputParameters, String filter, TimeFrame timeFrame) throws BalException {
         List<TypeReference<?>> types = this.convertTypes(outputParameters);
         final Event event = new Event(eventIdentifier, types);
@@ -714,5 +720,30 @@ public class EthereumAdapter implements BlockchainAdapter {
                 .writeTimeout(0, TimeUnit.SECONDS)
                 .build();
         return new HttpService(url, client, false);
+    }
+
+    @Override
+    public CompletableFuture<Transaction> tryReplaceInvocation(String s, String s1, String s2, List<String> list, List<Parameter> list1, List<Parameter> list2, double v, String s3, String s4, List<String> list3, long l) {
+        return null;
+    }
+
+    @Override
+    public boolean tryCancelInvocation(String s) {
+        return false;
+    }
+
+    @Override
+    public boolean canHandleDelegatedSubscription() {
+        return false;
+    }
+
+    @Override
+    public boolean delegatedSubscribe(String s, String s1, List<Parameter> list, double v, String s2, String s3, String s4) {
+        return false;
+    }
+
+    @Override
+    public boolean delegatedUnsubscribe(String s, String s1, String s2, List<String> list, List<Parameter> list1, String s3) {
+        return false;
     }
 }
