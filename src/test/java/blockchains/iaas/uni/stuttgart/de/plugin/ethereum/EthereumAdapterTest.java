@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -146,7 +147,9 @@ class EthereumAdapterTest {
 
     private EthereumAdapter getAdapter() {
         String nodeUrl = "http://localhost:7545/";
-        String keystorePath = "/account.json";
+        URL url = Thread.currentThread().getContextClassLoader().getResource("UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json");
+        File file = new File(url.getPath());
+        String keystorePath = file.getPath();
         String keystorePassword = "123456789";
         double adversaryVotingRatio = 0.2;
         int pollingTimeSeconds = 2;
