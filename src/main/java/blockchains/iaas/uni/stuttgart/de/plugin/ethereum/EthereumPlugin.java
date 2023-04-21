@@ -51,8 +51,9 @@ public class EthereumPlugin extends Plugin {
             double adversaryVotingRatio = ethereumConnectionProfile.getAdversaryVotingRatio();
             String keystorePassword = ethereumConnectionProfile.getKeystorePassword();
             String keystorePath = ethereumConnectionProfile.getKeystorePath();
+            String resourceManagerSmartContractAddress = ethereumConnectionProfile.getResourceManagerSmartContractAddress();
 
-            final EthereumAdapter adapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds);
+            final EthereumAdapter adapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds, resourceManagerSmartContractAddress);
 
             final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
             cCalc.setAdversaryRatio(adversaryVotingRatio);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -21,19 +21,23 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
     public static final String KEYSTORE_PATH = PREFIX + "keystorePath";
     public static final String KEYSTORE_PASSWORD = PREFIX + "keystorePassword";
     public static final String BLOCK_TIME = PREFIX + "blockTimeSeconds";
+    public static final String RMSC_ADDRESS = PREFIX + "resourceManagerSmartContractAddress";
     private String nodeUrl;
     private String keystorePath;
     private String keystorePassword;
     private int pollingTimeSeconds;
+    private String resourceManagerSmartContractAddress;
 
     public EthereumConnectionProfile() {
     }
 
-    public EthereumConnectionProfile(String nodeUrl, String keystorePath, String keystorePassword, int pollingTimeSeconds) {
+    public EthereumConnectionProfile(String nodeUrl, String keystorePath, String keystorePassword, int pollingTimeSeconds,
+                                     String resourceManagerSmartContractAddress) {
         this.nodeUrl = nodeUrl;
         this.keystorePath = keystorePath;
         this.keystorePassword = keystorePassword;
         this.pollingTimeSeconds = pollingTimeSeconds;
+        this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
     }
 
     public String getNodeUrl() {
@@ -68,6 +72,14 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
         this.pollingTimeSeconds = pollingTimeSeconds;
     }
 
+    public String getResourceManagerSmartContractAddress() {
+        return resourceManagerSmartContractAddress;
+    }
+
+    public void setResourceManagerSmartContractAddress(String resourceManagerSmartContractAddress) {
+        this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
+    }
+
     @Override
     public Properties getAsProperties() {
         final Properties result = super.getAsProperties();
@@ -75,6 +87,7 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
         result.setProperty(KEYSTORE_PASSWORD, this.keystorePassword);
         result.setProperty(KEYSTORE_PATH, this.keystorePath);
         result.setProperty(BLOCK_TIME, String.valueOf(this.pollingTimeSeconds));
+        result.setProperty(RMSC_ADDRESS, this.resourceManagerSmartContractAddress);
 
         return result;
     }

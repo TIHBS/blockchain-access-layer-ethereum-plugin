@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
  *
@@ -18,12 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +40,7 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.OkHttpClient;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
@@ -79,20 +75,22 @@ import org.web3j.utils.Async;
 import org.web3j.utils.Convert;
 
 public class EthereumAdapter implements BlockchainAdapter {
+    private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
     private Credentials credentials;
     private final String nodeUrl;
     private final Web3j web3j;
     private final DateTimeFormatter formatter;
-    private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
     private final int averageBlockTimeSeconds;
+    private final String resourceManagerSmartContractAddress;
     protected FinalityConfidenceCalculator confidenceCalculator;
 
-    public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds) {
+    public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds, String resourceManagerSmartContractAddress) {
         this.nodeUrl = nodeUrl;
         this.averageBlockTimeSeconds = averageBlockTimeSeconds;
         // We use a specific implementation so we can change the polling period (useful for prototypes).
         this.web3j = new JsonRpc2_0Web3j(createWeb3HttpService(this.nodeUrl), this.averageBlockTimeSeconds, Async.defaultExecutorService());
         this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
     }
 
 
@@ -428,6 +426,38 @@ public class EthereumAdapter implements BlockchainAdapter {
         } catch (IOException e) {
             throw new BlockchainNodeUnreachableException(e.getMessage());
         }
+    }
+
+    @Override
+    public SmartContract getResourceManagerSmartContract() throws NotSupportedException {
+        Parameter txId = new Parameter("txId",
+                "{ \"Name\": \"txId\", \"Type\": \"string\" }",
+                null);
+        List<Parameter> txIdAsList = new ArrayList<>();
+        List<Parameter> emptyList = new ArrayList<>();
+        txIdAsList.add(txId);
+        SmartContractFunction prepare = new SmartContractFunction("prepare", txIdAsList, emptyList);
+        SmartContractFunction commit = new SmartContractFunction("commit", txIdAsList, emptyList);
+        SmartContractFunction abort = new SmartContractFunction("abort", txIdAsList, emptyList);
+        Parameter owner = new Parameter("owner",
+                "{ \"Name\": \"owner\", \"Type\": \"address\" }",
+                null);
+        Parameter isYes = new Parameter("isYes",
+                "{ \"Name\": \"isYes\", \"Type\": \"bool\" }",
+                null);
+        List<Parameter> votedEventParams = new ArrayList<>();
+        votedEventParams.add(owner);
+        votedEventParams.add(txId);
+        votedEventParams.add(isYes);
+        SmartContractEvent voted = new SmartContractEvent("Voted", votedEventParams);
+        List<SmartContractFunction> functions = new ArrayList<>();
+        functions.add(prepare);
+        functions.add(commit);
+        functions.add(abort);
+        List<SmartContractEvent> events = new ArrayList<>();
+        events.add(voted);
+
+        return new SmartContract(this.resourceManagerSmartContractAddress, functions, events);
     }
 
     @Override

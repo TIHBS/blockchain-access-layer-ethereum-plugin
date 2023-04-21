@@ -153,7 +153,7 @@ class EthereumAdapterTest {
         String keystorePassword = "123456789";
         double adversaryVotingRatio = 0.2;
         int pollingTimeSeconds = 2;
-        EthereumAdapter ethereumAdapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds);
+        EthereumAdapter ethereumAdapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds, "");
         final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
         cCalc.setAdversaryRatio(adversaryVotingRatio);
         try {
