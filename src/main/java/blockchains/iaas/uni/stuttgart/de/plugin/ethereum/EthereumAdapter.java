@@ -87,7 +87,7 @@ public class EthereumAdapter implements BlockchainAdapter {
     public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds, String resourceManagerSmartContractAddress) {
         this.nodeUrl = nodeUrl;
         this.averageBlockTimeSeconds = averageBlockTimeSeconds;
-        // We use a specific implementation so we can change the polling period (useful for prototypes).
+        // We use a specific implementation, so we can change the polling period (useful for prototypes).
         this.web3j = new JsonRpc2_0Web3j(createWeb3HttpService(this.nodeUrl), this.averageBlockTimeSeconds, Async.defaultExecutorService());
         this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
@@ -429,7 +429,7 @@ public class EthereumAdapter implements BlockchainAdapter {
     }
 
     @Override
-    public SmartContract getResourceManagerSmartContract() throws NotSupportedException {
+    public ResourceManagerSmartContract getResourceManagerSmartContract() throws NotSupportedException {
         Parameter txId = new Parameter("txId",
                 "{ \"Name\": \"txId\", \"Type\": \"string\" }",
                 null);
@@ -449,15 +449,20 @@ public class EthereumAdapter implements BlockchainAdapter {
         votedEventParams.add(owner);
         votedEventParams.add(txId);
         votedEventParams.add(isYes);
+        List<Parameter> abortedEventParams = new ArrayList<>();
+        abortedEventParams.add(owner);
+        abortedEventParams.add(txId);
         SmartContractEvent voted = new SmartContractEvent("Voted", votedEventParams);
+        SmartContractEvent aborted = new SmartContractEvent("TxAborted", abortedEventParams);
         List<SmartContractFunction> functions = new ArrayList<>();
         functions.add(prepare);
         functions.add(commit);
         functions.add(abort);
         List<SmartContractEvent> events = new ArrayList<>();
         events.add(voted);
+        events.add(aborted);
 
-        return new SmartContract(this.resourceManagerSmartContractAddress, functions, events);
+        return new EthereumResourceManagerSmartContract(this.resourceManagerSmartContractAddress, functions, events);
     }
 
     @Override

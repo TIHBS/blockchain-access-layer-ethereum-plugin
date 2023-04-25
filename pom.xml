@@ -11,7 +11,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <adapter.api.version>feature~tccsci-1.0.6-gf4c87bf-9</adapter.api.version>
+        <adapter.api.version>feature~tccsci-1.0.6-g625dcdc-13</adapter.api.version>
     </properties>
 
     <build>
