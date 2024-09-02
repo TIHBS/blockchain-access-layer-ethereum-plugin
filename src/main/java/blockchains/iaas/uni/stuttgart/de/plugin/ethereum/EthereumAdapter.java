@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
  *
@@ -35,14 +35,13 @@ import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.api.utils.BooleanExpressionEvaluator;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.api.utils.SmartContractPathParser;
-import com.google.common.base.Strings;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import okhttp3.OkHttpClient;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.EventValues;
 import org.web3j.abi.FunctionEncoder;
@@ -74,14 +73,17 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Async;
 import org.web3j.utils.Convert;
 
+@Log4j2
 public class EthereumAdapter implements BlockchainAdapter {
-    private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
     private Credentials credentials;
     private final String nodeUrl;
+    @Getter
     private final Web3j web3j;
     private final DateTimeFormatter formatter;
     private final int averageBlockTimeSeconds;
     private final String resourceManagerSmartContractAddress;
+    @Setter
+    @Getter
     protected FinalityConfidenceCalculator confidenceCalculator;
 
     public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds, String resourceManagerSmartContractAddress) {
@@ -93,18 +95,6 @@ public class EthereumAdapter implements BlockchainAdapter {
         this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
     }
 
-
-    public FinalityConfidenceCalculator getConfidenceCalculator() {
-        return confidenceCalculator;
-    }
-
-    public void setConfidenceCalculator(FinalityConfidenceCalculator confidenceCalculator) {
-        this.confidenceCalculator = confidenceCalculator;
-    }
-
-    public Web3j getWeb3j() {
-        return web3j;
-    }
 
     Credentials getCredentials() {
         return credentials;
@@ -155,7 +145,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                 // make sure the transaction exists
                 final EthTransaction transaction = web3j.ethGetTransactionByHash(txHash).send();
                 // if not, then it is either invalidated or did not exist in the first place
-                if (!transaction.getTransaction().isPresent()) {
+                if (transaction.getTransaction().isEmpty()) {
                     final String msg = String.format("The transaction of the hash %s is not found!", txHash);
                     log.info(msg);
                     handleDetectedState(transaction.getTransaction(), TransactionState.NOT_FOUND, observedStates, result);
@@ -267,7 +257,7 @@ public class EthereumAdapter implements BlockchainAdapter {
         final PublishSubject<Transaction> result = PublishSubject.create();
         final Disposable newTransactionObservable = web3j.transactionFlowable().subscribe(tx -> {
             if (myAddress.equalsIgnoreCase(tx.getTo())) {
-                if (senderId == null || senderId.trim().length() == 0 || senderId.equalsIgnoreCase(tx.getFrom())) {
+                if (senderId == null || senderId.trim().isEmpty() || senderId.equalsIgnoreCase(tx.getFrom())) {
                     log.info("New transaction received from:" + tx.getFrom());
                     subscribeForTxEvent(tx.getHash(), waitFor, TransactionState.CONFIRMED)
                             .thenAccept(result::onNext)
@@ -351,7 +341,7 @@ public class EthereumAdapter implements BlockchainAdapter {
             final String encodedFunction = FunctionEncoder.encode(function);
 
             // if we are expecting a return value, we try to invoke as a method call, otherwise, we try a transaction
-            if (outputParameters.size() > 0) {
+            if (!outputParameters.isEmpty()) {
                 return this.invokeFunctionByMethodCall(
                         encodedFunction,
                         smartContractAddress,
@@ -514,7 +504,7 @@ public class EthereumAdapter implements BlockchainAdapter {
             to = DefaultBlockParameterName.LATEST;
         } else {
 
-            if (Strings.isNullOrEmpty(timeFrame.getFrom())) {
+            if (timeFrame.getFrom() == null || timeFrame.getTo().isEmpty()) {
                 from = DefaultBlockParameterName.EARLIEST;
             } else {
                 LocalDateTime fromDateTime = LocalDateTime.parse(timeFrame.getFrom(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -522,7 +512,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                 from = new DefaultBlockParameterNumber(fromBlockNumber);
             }
 
-            if (Strings.isNullOrEmpty(timeFrame.getTo())) {
+            if (timeFrame.getTo() == null || timeFrame.getFrom().isEmpty()) {
                 to = DefaultBlockParameterName.LATEST;
             } else {
                 LocalDateTime toDateTime = LocalDateTime.parse(timeFrame.getTo(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2023 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -11,10 +11,14 @@
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Properties;
 
 
+@Setter
+@Getter
 public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
     public static final String NODE_URL = PREFIX + "nodeUrl";
@@ -37,46 +41,6 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
         this.keystorePath = keystorePath;
         this.keystorePassword = keystorePassword;
         this.pollingTimeSeconds = pollingTimeSeconds;
-        this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
-    }
-
-    public String getNodeUrl() {
-        return nodeUrl;
-    }
-
-    public void setNodeUrl(String nodeUrl) {
-        this.nodeUrl = nodeUrl;
-    }
-
-    public String getKeystorePath() {
-        return keystorePath;
-    }
-
-    public void setKeystorePath(String keystorePath) {
-        this.keystorePath = keystorePath;
-    }
-
-    public String getKeystorePassword() {
-        return keystorePassword;
-    }
-
-    public void setKeystorePassword(String keystorePassword) {
-        this.keystorePassword = keystorePassword;
-    }
-
-    public int getPollingTimeSeconds() {
-        return pollingTimeSeconds;
-    }
-
-    public void setPollingTimeSeconds(int pollingTimeSeconds) {
-        this.pollingTimeSeconds = pollingTimeSeconds;
-    }
-
-    public String getResourceManagerSmartContractAddress() {
-        return resourceManagerSmartContractAddress;
-    }
-
-    public void setResourceManagerSmartContractAddress(String resourceManagerSmartContractAddress) {
         this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
     }
 
