@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2022-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Akshay Patel
+ * Co-Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
  * terms the Apache Software License 2.0
@@ -8,22 +9,21 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.IAdapterExtension;
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
 import blockchains.iaas.uni.stuttgart.de.api.interfaces.BlockchainAdapter;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j2;
 import org.pf4j.Extension;
 import org.pf4j.Plugin;
 import org.pf4j.PluginWrapper;
 import org.web3j.crypto.CipherException;
 
 import java.io.IOException;
-import java.util.Map;
 
+@Log4j2
 public class EthereumPlugin extends Plugin {
     public EthereumPlugin(PluginWrapper wrapper) {
         super(wrapper);
@@ -40,6 +40,7 @@ public class EthereumPlugin extends Plugin {
     }
 
     @Extension
+    @Log4j2
     public static class EthAdapterImpl implements IAdapterExtension {
 
         @Override
@@ -51,8 +52,9 @@ public class EthereumPlugin extends Plugin {
             double adversaryVotingRatio = ethereumConnectionProfile.getAdversaryVotingRatio();
             String keystorePassword = ethereumConnectionProfile.getKeystorePassword();
             String keystorePath = ethereumConnectionProfile.getKeystorePath();
+            String resourceManagerSmartContractAddress = ethereumConnectionProfile.getResourceManagerSmartContractAddress();
 
-            final EthereumAdapter adapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds);
+            final EthereumAdapter adapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds, resourceManagerSmartContractAddress);
 
             final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
             cCalc.setAdversaryRatio(adversaryVotingRatio);
@@ -60,10 +62,11 @@ public class EthereumPlugin extends Plugin {
             try {
                 adapter.setCredentials(keystorePassword, keystorePath);
             } catch (IOException | CipherException e) {
-                e.printStackTrace();
+                log.warn("Failed to set credentials for the Ethereum Adapter of the connection profile: {}", connectionProfile, e);
             }
 
             adapter.setConfidenceCalculator(cCalc);
+
             return adapter;
         }
 

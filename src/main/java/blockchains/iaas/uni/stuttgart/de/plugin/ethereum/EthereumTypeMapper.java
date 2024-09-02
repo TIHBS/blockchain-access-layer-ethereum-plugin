@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,7 +8,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.ParameterException;
@@ -73,8 +72,8 @@ public class EthereumTypeMapper {
                     // will throw an exception if not exact!
                     int m = MathUtils.log2(maximum.add(BigInteger.ONE));
 
-                    if (m % 8 == 0) {
-                        return AbiTypes.getType("uint" + m);
+                    if ((m - 1) % 8 == 0) {
+                        return AbiTypes.getType("uint" + (m - 1));
                     }
                 }
             } else {
@@ -83,8 +82,8 @@ public class EthereumTypeMapper {
                     // will throw an exception if not exact!
                     int m = MathUtils.log2(maximum.add(BigInteger.ONE));
 
-                    if ((m + 1) % 8 == 0) {
-                        return AbiTypes.getType("int" + (m + 1));
+                    if (m % 8 == 0) {
+                        return AbiTypes.getType("int" + m);
                     }
                 }
             }

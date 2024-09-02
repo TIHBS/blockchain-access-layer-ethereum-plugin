@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
  *
@@ -18,12 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
@@ -40,13 +35,13 @@ import blockchains.iaas.uni.stuttgart.de.api.model.*;
 import blockchains.iaas.uni.stuttgart.de.api.utils.BooleanExpressionEvaluator;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.api.utils.SmartContractPathParser;
-import com.google.common.base.Strings;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.subjects.PublishSubject;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
 import org.web3j.abi.EventValues;
 import org.web3j.abi.FunctionEncoder;
@@ -78,35 +73,28 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Async;
 import org.web3j.utils.Convert;
 
+@Log4j2
 public class EthereumAdapter implements BlockchainAdapter {
     private Credentials credentials;
     private final String nodeUrl;
+    @Getter
     private final Web3j web3j;
     private final DateTimeFormatter formatter;
-    private static final Logger log = LoggerFactory.getLogger(EthereumAdapter.class);
     private final int averageBlockTimeSeconds;
+    private final String resourceManagerSmartContractAddress;
+    @Setter
+    @Getter
     protected FinalityConfidenceCalculator confidenceCalculator;
 
-    public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds) {
+    public EthereumAdapter(final String nodeUrl, final int averageBlockTimeSeconds, String resourceManagerSmartContractAddress) {
         this.nodeUrl = nodeUrl;
         this.averageBlockTimeSeconds = averageBlockTimeSeconds;
-        // We use a specific implementation so we can change the polling period (useful for prototypes).
+        // We use a specific implementation, so we can change the polling period (useful for prototypes).
         this.web3j = new JsonRpc2_0Web3j(createWeb3HttpService(this.nodeUrl), this.averageBlockTimeSeconds, Async.defaultExecutorService());
         this.formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        this.resourceManagerSmartContractAddress = resourceManagerSmartContractAddress;
     }
 
-
-    public FinalityConfidenceCalculator getConfidenceCalculator() {
-        return confidenceCalculator;
-    }
-
-    public void setConfidenceCalculator(FinalityConfidenceCalculator confidenceCalculator) {
-        this.confidenceCalculator = confidenceCalculator;
-    }
-
-    public Web3j getWeb3j() {
-        return web3j;
-    }
 
     Credentials getCredentials() {
         return credentials;
@@ -157,7 +145,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                 // make sure the transaction exists
                 final EthTransaction transaction = web3j.ethGetTransactionByHash(txHash).send();
                 // if not, then it is either invalidated or did not exist in the first place
-                if (!transaction.getTransaction().isPresent()) {
+                if (transaction.getTransaction().isEmpty()) {
                     final String msg = String.format("The transaction of the hash %s is not found!", txHash);
                     log.info(msg);
                     handleDetectedState(transaction.getTransaction(), TransactionState.NOT_FOUND, observedStates, result);
@@ -269,7 +257,7 @@ public class EthereumAdapter implements BlockchainAdapter {
         final PublishSubject<Transaction> result = PublishSubject.create();
         final Disposable newTransactionObservable = web3j.transactionFlowable().subscribe(tx -> {
             if (myAddress.equalsIgnoreCase(tx.getTo())) {
-                if (senderId == null || senderId.trim().length() == 0 || senderId.equalsIgnoreCase(tx.getFrom())) {
+                if (senderId == null || senderId.trim().isEmpty() || senderId.equalsIgnoreCase(tx.getFrom())) {
                     log.info("New transaction received from:" + tx.getFrom());
                     subscribeForTxEvent(tx.getHash(), waitFor, TransactionState.CONFIRMED)
                             .thenAccept(result::onNext)
@@ -353,7 +341,7 @@ public class EthereumAdapter implements BlockchainAdapter {
             final String encodedFunction = FunctionEncoder.encode(function);
 
             // if we are expecting a return value, we try to invoke as a method call, otherwise, we try a transaction
-            if (outputParameters.size() > 0) {
+            if (!outputParameters.isEmpty()) {
                 return this.invokeFunctionByMethodCall(
                         encodedFunction,
                         smartContractAddress,
@@ -431,6 +419,43 @@ public class EthereumAdapter implements BlockchainAdapter {
     }
 
     @Override
+    public ResourceManagerSmartContract getResourceManagerSmartContract() throws NotSupportedException {
+        Parameter txId = new Parameter("txId",
+                "{ \"Name\": \"txId\", \"Type\": \"string\" }",
+                null);
+        List<Parameter> txIdAsList = new ArrayList<>();
+        List<Parameter> emptyList = new ArrayList<>();
+        txIdAsList.add(txId);
+        SmartContractFunction prepare = new SmartContractFunction("prepare", txIdAsList, emptyList);
+        SmartContractFunction commit = new SmartContractFunction("commit", txIdAsList, emptyList);
+        SmartContractFunction abort = new SmartContractFunction("abort", txIdAsList, emptyList);
+        Parameter owner = new Parameter("owner",
+                "{ \"Name\": \"owner\", \"Type\": \"address\" }",
+                null);
+        Parameter isYes = new Parameter("isYes",
+                "{ \"Name\": \"isYes\", \"Type\": \"bool\" }",
+                null);
+        List<Parameter> votedEventParams = new ArrayList<>();
+        votedEventParams.add(owner);
+        votedEventParams.add(txId);
+        votedEventParams.add(isYes);
+        List<Parameter> abortedEventParams = new ArrayList<>();
+        abortedEventParams.add(owner);
+        abortedEventParams.add(txId);
+        SmartContractEvent voted = new SmartContractEvent("Voted", votedEventParams);
+        SmartContractEvent aborted = new SmartContractEvent("TxAborted", abortedEventParams);
+        List<SmartContractFunction> functions = new ArrayList<>();
+        functions.add(prepare);
+        functions.add(commit);
+        functions.add(abort);
+        List<SmartContractEvent> events = new ArrayList<>();
+        events.add(voted);
+        events.add(aborted);
+
+        return new EthereumResourceManagerSmartContract(this.resourceManagerSmartContractAddress, functions, events);
+    }
+
+    @Override
     public String testConnection() {
         return this.testConnectionToNode();
     }
@@ -479,7 +504,7 @@ public class EthereumAdapter implements BlockchainAdapter {
             to = DefaultBlockParameterName.LATEST;
         } else {
 
-            if (Strings.isNullOrEmpty(timeFrame.getFrom())) {
+            if (timeFrame.getFrom() == null || timeFrame.getTo().isEmpty()) {
                 from = DefaultBlockParameterName.EARLIEST;
             } else {
                 LocalDateTime fromDateTime = LocalDateTime.parse(timeFrame.getFrom(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -487,7 +512,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                 from = new DefaultBlockParameterNumber(fromBlockNumber);
             }
 
-            if (Strings.isNullOrEmpty(timeFrame.getTo())) {
+            if (timeFrame.getTo() == null || timeFrame.getFrom().isEmpty()) {
                 to = DefaultBlockParameterName.LATEST;
             } else {
                 LocalDateTime toDateTime = LocalDateTime.parse(timeFrame.getTo(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);

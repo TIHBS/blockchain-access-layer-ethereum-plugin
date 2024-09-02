@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2022 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  * Co-author: Akshay Patel
  *
@@ -11,40 +11,41 @@
  *******************************************************************************/
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-
 import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
 import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
-
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.plugin.ethereum.contracts.Permissions;
+import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.tx.gas.DefaultGasProvider;
 
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
 /**
  * To run these tests, you need ganache with the following mnemonic:
  * smart contract composition
  */
+@Log4j2
 class EthereumAdapterTest {
     private static final String MESSAGE = "This was not a difficult task!";
+    private static final double REQUIRED_CONFIDENCE = 0.6;
     private final String BYTES_TYPE = "{\n" +
             "\t\"type\": \"array\",\n" +
             "\t\"items\": {\n" +
@@ -56,12 +57,10 @@ class EthereumAdapterTest {
             "\t\"type\": \"string\",\n" +
             "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
             "}";
-    private static final double REQUIRED_CONFIDENCE = 0.6;
     private EthereumAdapter adapter;
-    private static final Logger log = LoggerFactory.getLogger(EthereumAdapterTest.class);
 
     @BeforeEach
-    void init() {
+    void init() throws CipherException, IOException {
         this.adapter = getAdapter();
     }
 
@@ -75,7 +74,7 @@ class EthereumAdapterTest {
         final String toAddress = "0x182761AC584C0016Cdb3f5c59e0242EF9834fef0";
         final BigDecimal value = new BigDecimal(5000);
         LinearChainTransaction result = (LinearChainTransaction) this.adapter.submitTransaction(toAddress, value, REQUIRED_CONFIDENCE).get();
-        log.debug("transaction hash is: " + result.getTransactionHash());
+        log.debug("transaction hash is: {}", () -> result.getTransactionHash());
     }
 
     @Test
@@ -144,21 +143,20 @@ class EthereumAdapterTest {
         return contract;
     }
 
-    private EthereumAdapter getAdapter() {
+    private EthereumAdapter getAdapter() throws CipherException, IOException {
         String nodeUrl = "http://localhost:7545/";
-        String keystorePath = "/account.json";
+        URL url = Thread.currentThread().getContextClassLoader().getResource("UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json");
+        File file = new File(url.getPath());
+        String keystorePath = file.getPath();
         String keystorePassword = "123456789";
         double adversaryVotingRatio = 0.2;
         int pollingTimeSeconds = 2;
-        EthereumAdapter ethereumAdapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds);
+        EthereumAdapter ethereumAdapter = new EthereumAdapter(nodeUrl, pollingTimeSeconds, "");
         final PoWConfidenceCalculator cCalc = new PoWConfidenceCalculator();
         cCalc.setAdversaryRatio(adversaryVotingRatio);
-        try {
-            ethereumAdapter.setCredentials(keystorePassword, keystorePath);
-        } catch (IOException | CipherException e) {
-            e.printStackTrace();
-        }
+        ethereumAdapter.setCredentials(keystorePassword, keystorePath);
         ethereumAdapter.setConfidenceCalculator(cCalc);
+
         return ethereumAdapter;
     }
 }

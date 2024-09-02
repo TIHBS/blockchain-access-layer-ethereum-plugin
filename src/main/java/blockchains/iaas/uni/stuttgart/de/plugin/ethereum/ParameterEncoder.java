@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Institute for the Architecture of Application System - University of Stuttgart
+ * Copyright (c) 2019-2024 Institute for the Architecture of Application System - University of Stuttgart
  * Author: Ghareeb Falazi
  *
  * This program and the accompanying materials are made available under the
@@ -8,14 +8,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *******************************************************************************/
-
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.exceptions.ParameterException;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
+import jakarta.xml.bind.DatatypeConverter;
 import org.web3j.abi.datatypes.*;
 
-import javax.xml.bind.DatatypeConverter;
 import java.math.BigInteger;
 
 public class ParameterEncoder {
