@@ -11,6 +11,7 @@
 package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnectionProfile;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,6 +20,7 @@ import java.util.Properties;
 
 @Setter
 @Getter
+@JsonTypeName("ethereum")
 public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
     public static final String NODE_URL = PREFIX + "nodeUrl";
@@ -54,5 +56,35 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
         result.setProperty(RMSC_ADDRESS, this.resourceManagerSmartContractAddress);
 
         return result;
+    }
+
+    @Override
+    public Object getProperty(Object o) {
+
+        return switch (o.toString()) {
+            case NODE_URL -> this.nodeUrl;
+            case KEYSTORE_PATH -> this.keystorePath;
+            case KEYSTORE_PASSWORD -> this.keystorePassword;
+            case BLOCK_TIME -> String.valueOf(this.pollingTimeSeconds);
+            case RMSC_ADDRESS -> this.resourceManagerSmartContractAddress;
+            default -> super.getAsProperties().get(o);
+        };
+    }
+
+    @Override
+    public void setProperty(Object o, Object o1) {
+        Properties parent = super.getAsProperties();
+
+        if (parent.containsKey(o)) {
+            setAdversaryVotingRatio(Double.parseDouble(o1.toString()));
+        } else {
+            switch (o.toString()) {
+                case NODE_URL -> this.nodeUrl = (String) o1;
+                case KEYSTORE_PATH -> this.keystorePath = (String) o1;
+                case KEYSTORE_PASSWORD -> this.keystorePassword = (String) o1;
+                case BLOCK_TIME -> this.pollingTimeSeconds = Integer.parseInt((String) o1);
+                case RMSC_ADDRESS -> this.resourceManagerSmartContractAddress = (String) o1;
+            } ;
+        }
     }
 }

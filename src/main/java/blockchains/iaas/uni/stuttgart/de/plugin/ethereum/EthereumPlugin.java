@@ -45,8 +45,8 @@ public class EthereumPlugin extends Plugin {
 
         @Override
         public BlockchainAdapter getAdapter(AbstractConnectionProfile connectionProfile) {
+            assert connectionProfile instanceof EthereumConnectionProfile;
             EthereumConnectionProfile ethereumConnectionProfile = (EthereumConnectionProfile) connectionProfile;
-
             String nodeUrl = ethereumConnectionProfile.getNodeUrl();
             int pollingTimeSeconds = ethereumConnectionProfile.getPollingTimeSeconds();
             double adversaryVotingRatio = ethereumConnectionProfile.getAdversaryVotingRatio();
