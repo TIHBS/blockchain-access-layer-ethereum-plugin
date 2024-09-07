@@ -46,14 +46,14 @@ import java.util.concurrent.ExecutionException;
 class EthereumAdapterTest {
     private static final String MESSAGE = "This was not a difficult task!";
     private static final double REQUIRED_CONFIDENCE = 0.6;
-    private final String BYTES_TYPE = "{\n" +
+    private static final String BYTES_TYPE = "{\n" +
             "\t\"type\": \"array\",\n" +
             "\t\"items\": {\n" +
             "\t\t\"type\": \"string\",\n" +
             "\t\t\"pattern\": \"^[a-fA-F0-9]{2}$\"\n" +
             "\t}\n" +
             "}";
-    private final String ADDRESS_TYPE = "{\n" +
+    private static final String ADDRESS_TYPE = "{\n" +
             "\t\"type\": \"string\",\n" +
             "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
             "}";
