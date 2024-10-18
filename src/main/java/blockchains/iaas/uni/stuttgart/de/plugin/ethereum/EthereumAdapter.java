@@ -50,9 +50,9 @@ import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Event;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
-import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
+import org.web3j.crypto.exception.CipherException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -300,7 +300,8 @@ public class EthereumAdapter implements BlockchainAdapter {
             List<Parameter> inputs,
             List<Parameter> outputs,
             double requiredConfidence,
-            long timeoutMillis
+            long timeoutMillis,
+            boolean sideEffects
     ) throws NotSupportedException, ParameterException {
         if (credentials == null) {
             log.error("Credentials are not set for the Ethereum user");
@@ -340,8 +341,8 @@ public class EthereumAdapter implements BlockchainAdapter {
 
             final String encodedFunction = FunctionEncoder.encode(function);
 
-            // if we are expecting a return value, we try to invoke as a method call, otherwise, we try a transaction
-            if (!outputParameters.isEmpty()) {
+            // if there are no side effects, we invoke as a method call, otherwise, we try a transaction
+            if (!sideEffects) {
                 return this.invokeFunctionByMethodCall(
                         encodedFunction,
                         smartContractAddress,

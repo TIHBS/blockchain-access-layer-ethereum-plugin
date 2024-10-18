@@ -6,7 +6,7 @@
 
     <groupId>blockchains.iaas.uni.stuttgart.de</groupId>
     <artifactId>blockchain-access-layer-ethereum-plugin</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.3</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -55,7 +55,7 @@
                         <manifestEntries>
                             <Plugin-Class>blockchains.iaas.uni.stuttgart.de.plugin.ethereum.EthereumPlugin</Plugin-Class>
                             <Plugin-Id>ethereum-plugin</Plugin-Id>
-                            <Plugin-Version>3.0.1</Plugin-Version>
+                            <Plugin-Version>3.0.3</Plugin-Version>
                             <Plugin-Description>Etheruem plugin</Plugin-Description>
                             <Plugin-Provider>Ghareeb Falazi</Plugin-Provider>
                             <Plugin-License>Apache License 2.0</Plugin-License>
@@ -96,13 +96,13 @@
         <dependency>
             <groupId>com.github.TIHBS</groupId>
             <artifactId>blockchain-access-layer-api</artifactId>
-            <version>3.0.2</version>
+            <version>3.0.3</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.web3j</groupId>
             <artifactId>core</artifactId>
-            <version>4.5.6</version>
+            <version>4.12.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

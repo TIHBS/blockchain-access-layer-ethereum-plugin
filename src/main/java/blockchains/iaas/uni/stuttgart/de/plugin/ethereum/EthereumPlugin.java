@@ -19,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
 import org.pf4j.Extension;
 import org.pf4j.Plugin;
 import org.pf4j.PluginWrapper;
-import org.web3j.crypto.CipherException;
+import org.web3j.crypto.exception.CipherException;
 
 import java.io.IOException;
 

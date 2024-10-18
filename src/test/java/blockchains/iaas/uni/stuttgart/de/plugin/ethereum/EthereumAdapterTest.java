@@ -21,9 +21,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.web3j.crypto.CipherException;
+
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletUtils;
+import org.web3j.crypto.exception.CipherException;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.io.File;
@@ -41,22 +42,25 @@ import java.util.concurrent.ExecutionException;
 /**
  * To run these tests, you need ganache with the following mnemonic:
  * smart contract composition
+ * Also, make sure the gas limit per block is high enough to deploy a smart contract.
  */
 @Log4j2
 class EthereumAdapterTest {
     private static final String MESSAGE = "This was not a difficult task!";
     private static final double REQUIRED_CONFIDENCE = 0.6;
-    private static final String BYTES_TYPE = "{\n" +
-            "\t\"type\": \"array\",\n" +
-            "\t\"items\": {\n" +
-            "\t\t\"type\": \"string\",\n" +
-            "\t\t\"pattern\": \"^[a-fA-F0-9]{2}$\"\n" +
-            "\t}\n" +
-            "}";
-    private static final String ADDRESS_TYPE = "{\n" +
-            "\t\"type\": \"string\",\n" +
-            "\t\"pattern\": \"^0x[a-fA-F0-9]{40}$\"\n" +
-            "}";
+    private static final String BYTES_TYPE = """
+            {
+            \t"type": "array",
+            \t"items": {
+            \t\t"type": "string",
+            \t\t"pattern": "^[a-fA-F0-9]{2}$"
+            \t}
+            }""";
+    private static final String ADDRESS_TYPE = """
+            {
+            \t"type": "string",
+            \t"pattern": "^0x[a-fA-F0-9]{40}$"
+            }""";
     private EthereumAdapter adapter;
 
     @BeforeEach
@@ -86,12 +90,12 @@ class EthereumAdapterTest {
         String argument = new BigInteger(bytes).toString(16);
         List<Parameter> inputs = Collections.singletonList(new Parameter("publicKey", BYTES_TYPE, argument));
         List<Parameter> outputs = Collections.emptyList();
-        LinearChainTransaction init = (LinearChainTransaction) this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE, Long.MAX_VALUE).get();
+        LinearChainTransaction init = (LinearChainTransaction) this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE, Long.MAX_VALUE, true).get();
         log.info("initial transaction {}", init.getTransactionHash());
         functionIdentifier = "getPublicKey";
         inputs = Collections.singletonList(new Parameter("ethereumAddress", ADDRESS_TYPE, "0x90645Dc507225d61cB81cF83e7470F5a6AA1215A"));
         outputs = Collections.singletonList(new Parameter("return", BYTES_TYPE, null));
-        Transaction result = this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE, 0).get();
+        Transaction result = this.adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, REQUIRED_CONFIDENCE, 0, false).get();
         String value = result.getReturnValues().get(0).getValue();
         log.debug(value);
         String retrievedMessage = new String(new BigInteger(value, 16).toByteArray(), StandardCharsets.UTF_8);
@@ -143,7 +147,7 @@ class EthereumAdapterTest {
         return contract;
     }
 
-    private EthereumAdapter getAdapter() throws CipherException, IOException {
+    private EthereumAdapter getAdapter() throws IOException, CipherException {
         String nodeUrl = "http://localhost:7545/";
         URL url = Thread.currentThread().getContextClassLoader().getResource("UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json");
         File file = new File(url.getPath());
