@@ -35,6 +35,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -104,6 +105,52 @@ class EthereumAdapterTest {
     }
 
     @Test
+    void testTemp() throws ExecutionException, InterruptedException {
+        String smartContractPath = "0x3CFEc841539C8c9918738bCc6f425920CB555151";
+        String functionIdentifier = "isRoomAvailable";
+        List<Parameter> inputs = List.of(
+                Parameter.builder()
+                        .value("tx1")
+                        .type("{\"type\": \"string\"}")
+                        .name("txId")
+                        .build()
+        );
+        List<Parameter> outputs = new ArrayList<>();
+        double requiredConfidence = 0.99;
+        long timeoutMillis = 10000;
+        String signature = "";
+        boolean sideEffects = true;
+
+        adapter.invokeSmartContract(smartContractPath, functionIdentifier, inputs, outputs, requiredConfidence, timeoutMillis, sideEffects)
+                .thenAccept(tx -> {
+            log.info("resulting transaction: {}", tx);
+        }).exceptionally((e) -> {
+            log.error("error occurred", e);
+            return null;
+        }).get();
+
+    }
+
+    @Test
+    void testEvent() throws ExecutionException, InterruptedException {
+        String smartContractPath = "0xD6de246d347982F64b809E01Fb9511e39506eF64";
+        String functionIdentifier = "Transfer";
+        List<Parameter> inputs = List.of(
+                Parameter.builder()
+                        .type("{\"type\": \"boolean\"}")
+                        .name("msg")
+                        .build()
+        );
+        adapter.queryEvents(smartContractPath, functionIdentifier, inputs, null, null)
+                .thenAccept(tx -> {
+                    log.info("resulting query result: {}", tx);
+                }).exceptionally((e) -> {
+                    log.error("error occurred", e);
+                    return null;
+                }).get();
+    }
+
+    @Test
     @Disabled
     void createNewKeystoreFile() throws CipherException, IOException {
         final String filePath = "C:\\Ethereum\\keystore";
@@ -148,7 +195,7 @@ class EthereumAdapterTest {
     }
 
     private EthereumAdapter getAdapter() throws IOException, CipherException {
-        String nodeUrl = "http://localhost:7545/";
+        String nodeUrl = "http://localhost:8545/";
         URL url = Thread.currentThread().getContextClassLoader().getResource("UTC--2019-05-30T11-21-08.970000000Z--90645dc507225d61cb81cf83e7470f5a6aa1215a.json");
         File file = new File(url.getPath());
         String keystorePath = file.getPath();

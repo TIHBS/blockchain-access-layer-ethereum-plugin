@@ -377,7 +377,7 @@ public class EthereumAdapter implements BlockchainAdapter {
         long waitFor = ((PoWConfidenceCalculator) this.confidenceCalculator).getEquivalentBlockDepth(degreeOfConfidence);
         List<TypeReference<?>> types = this.convertTypes(outputParameters);
         final Event event = new Event(eventIdentifier, types);
-        final EthFilter ethFilter = this.generateSubscriptionFilter(smartContractAddress, event, types.size());
+        final EthFilter ethFilter = this.generateSubscriptionFilter(smartContractAddress, event);
         final PublishSubject<Occurrence> result = PublishSubject.create();
 
         Disposable newEventObservable = web3j.ethLogFlowable(ethFilter).subscribe(log -> {
@@ -403,7 +403,7 @@ public class EthereumAdapter implements BlockchainAdapter {
         List<TypeReference<?>> types = this.convertTypes(outputParameters);
         final Event event = new Event(eventIdentifier, types);
         try {
-            final EthFilter ethFilter = this.generateQueryFilter(smartContractAddress, event, types.size(), timeFrame);
+            final EthFilter ethFilter = this.generateQueryFilter(smartContractAddress, event, timeFrame);
             return web3j.ethGetLogs(ethFilter)
                     .sendAsync()
                     .thenApply(result -> {
@@ -502,11 +502,11 @@ public class EthereumAdapter implements BlockchainAdapter {
         return null;
     }
 
-    private EthFilter generateSubscriptionFilter(String smartContractAddress, Event event, int parameterCount) {
-        return this.generateFilter(smartContractAddress, event, parameterCount, DefaultBlockParameterName.LATEST, DefaultBlockParameterName.LATEST);
+    private EthFilter generateSubscriptionFilter(String smartContractAddress, Event event) {
+        return this.generateFilter(smartContractAddress, event, DefaultBlockParameterName.LATEST, DefaultBlockParameterName.LATEST);
     }
 
-    private EthFilter generateQueryFilter(String smartContractAddress, Event event, int parameterCount, TimeFrame timeFrame) throws IOException {
+    private EthFilter generateQueryFilter(String smartContractAddress, Event event, TimeFrame timeFrame) throws IOException {
         DefaultBlockParameter from;
         DefaultBlockParameter to;
 
@@ -543,7 +543,7 @@ public class EthereumAdapter implements BlockchainAdapter {
             }
         }
 
-        return this.generateFilter(smartContractAddress, event, parameterCount, from, to);
+        return this.generateFilter(smartContractAddress, event, from, to);
     }
 
     long getBlockAfterIsoDate(final LocalDateTime dateTime) throws IOException {
@@ -592,18 +592,13 @@ public class EthereumAdapter implements BlockchainAdapter {
         return Long.MAX_VALUE;
     }
 
-    private EthFilter generateFilter(String smartContractAddress, Event event, int parameterCount, DefaultBlockParameter from, DefaultBlockParameter to) {
-        EthFilter filter = new EthFilter(
+    private EthFilter generateFilter(String smartContractAddress, Event event, DefaultBlockParameter from, DefaultBlockParameter to) {
+
+        return new EthFilter(
                 from,
                 to,
                 smartContractAddress).
                 addSingleTopic(EventEncoder.encode(event));
-        // for each parameter, we add a null topic
-        for (int i = 0; i < parameterCount; i++) {
-            filter = filter.addNullTopic();
-        }
-
-        return filter;
     }
 
     private CompletableFuture<Transaction> invokeFunctionByMethodCall(String encodedFunction, String scAddress, List<Parameter> outputs,
@@ -677,6 +672,7 @@ public class EthereumAdapter implements BlockchainAdapter {
 
     private CompletableFuture<TransactionReceipt> waitUntilTransactionIsMined(final String txHash, final long timeOutMillis)
             throws CompletionException {
+        log.info("Started waiting until transaction with hash {} is mined. Timeout: {}", txHash, timeOutMillis);
         final CompletableFuture<TransactionReceipt> result = new CompletableFuture<>();
         final long START_TIME_MILLIS = (new Date()).getTime();
 
@@ -688,16 +684,23 @@ public class EthereumAdapter implements BlockchainAdapter {
                 if (currentTimeMillis - START_TIME_MILLIS >= timeOutMillis) {
                     TimeoutException exception =
                             new TimeoutException("Timeout is reached before transaction is mined!", txHash, 0.0);
+
                     result.completeExceptionally(exception);
                 } else {
                     EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
+
                     if (receipt != null && receipt.getTransactionReceipt().isPresent()) {
+                        log.info("Successfully waited until transaction is mined. Result: {}", () -> receipt.getResult());
                         result.complete(receipt.getResult());
                     }
                 }
             } catch (IOException e) {
+                log.error("Failed to wait until transaction is mined.", e);
                 result.completeExceptionally(e);
             }
+        }, error -> {
+            log.error("Failed to wait until transaction is mined.", error);
+            result.completeExceptionally(error);
         });
 
         //dispose the flowable when the CompletableFuture completes (either when detecting an event, or manually)

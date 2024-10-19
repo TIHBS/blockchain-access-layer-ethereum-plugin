@@ -41,9 +41,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    <descriptors>
+                        <descriptor>
+                            src/main/resources/jar-with-deps-with-exclude.xml
+                        </descriptor>
+                    </descriptors>
                     <finalName>${project.artifactId}-${project.version}-plugin</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <attach>false</attach>
@@ -98,6 +100,12 @@
             <artifactId>blockchain-access-layer-api</artifactId>
             <version>3.0.3</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.reactivex.rxjava2</groupId>
+                    <artifactId>rxjava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.web3j</groupId>
