@@ -14,13 +14,18 @@ import blockchains.iaas.uni.stuttgart.de.api.connectionprofiles.AbstractConnecti
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.crypto.exception.CipherException;
 
+import java.io.IOException;
 import java.util.Properties;
 
 
 @Setter
 @Getter
 @JsonTypeName("ethereum")
+@Log4j2
 public class EthereumConnectionProfile extends AbstractConnectionProfile {
     private static final String PREFIX = "ethereum.";
     public static final String NODE_URL = PREFIX + "nodeUrl";
@@ -56,6 +61,17 @@ public class EthereumConnectionProfile extends AbstractConnectionProfile {
         result.setProperty(RMSC_ADDRESS, this.resourceManagerSmartContractAddress);
 
         return result;
+    }
+
+    @Override
+    public String getIdentity() {
+        try {
+            return WalletUtils.loadCredentials(this.keystorePassword, this.keystorePath).getAddress();
+        } catch (IOException | CipherException e) {
+            log.error("Error occurred while reading the user credentials for Ethereum", e);
+            return null;
+
+        }
     }
 
     @Override

@@ -6,7 +6,7 @@
 
     <groupId>blockchains.iaas.uni.stuttgart.de</groupId>
     <artifactId>blockchain-access-layer-ethereum-plugin</artifactId>
-    <version>3.0.3</version>
+    <version>3.0.4</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>com.github.TIHBS</groupId>
             <artifactId>blockchain-access-layer-api</artifactId>
-            <version>3.0.3</version>
+            <version>3.0.4</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
