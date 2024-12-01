@@ -16,6 +16,7 @@ import org.web3j.abi.datatypes.*;
 
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonValue;
 import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 
@@ -63,8 +64,20 @@ public class EthereumTypeMapper {
 
     private static Class<? extends Type> handleIntegerType(JsonObject jsonObject) throws ArithmeticException {
         if (jsonObject.containsKey("minimum") && jsonObject.containsKey("maximum")) {
-            BigInteger minimum = jsonObject.getJsonNumber("minimum").bigIntegerValue();
-            BigInteger maximum = jsonObject.getJsonNumber("maximum").bigIntegerValue();
+            BigInteger minimum;
+            BigInteger maximum;
+
+            if (jsonObject.get("minimum").getValueType() == JsonValue.ValueType.NUMBER) {
+                minimum = jsonObject.getJsonNumber("minimum").bigIntegerValue();
+            } else {
+                minimum = new BigInteger(jsonObject.getString("minimum"));
+            }
+
+            if (jsonObject.get("maximum").getValueType() == JsonValue.ValueType.NUMBER) {
+                maximum = jsonObject.getJsonNumber("maximum").bigIntegerValue();
+            } else {
+                maximum = new BigInteger(jsonObject.getString("maximum"));
+            }
 
             if (minimum.equals(BigInteger.ZERO)) {
                 // this might be a uint<M>. Let's try to find M
