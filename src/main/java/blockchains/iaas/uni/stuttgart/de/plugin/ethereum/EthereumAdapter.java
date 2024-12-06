@@ -432,7 +432,7 @@ public class EthereumAdapter implements BlockchainAdapter {
     @Override
     public ResourceManagerSmartContract getResourceManagerSmartContract() throws NotSupportedException {
         Parameter txId = new Parameter("txId",
-                "{ \"Name\": \"txId\", \"Type\": \"string\" }",
+                "{ \"type\": \"string\" }",
                 null);
         List<Parameter> txIdAsList = new ArrayList<>();
         List<Parameter> emptyList = new ArrayList<>();
@@ -441,10 +441,10 @@ public class EthereumAdapter implements BlockchainAdapter {
         SmartContractFunction commit = new SmartContractFunction("commit", txIdAsList, emptyList);
         SmartContractFunction abort = new SmartContractFunction("abort", txIdAsList, emptyList);
         Parameter owner = new Parameter("owner",
-                "{ \"Name\": \"owner\", \"Type\": \"address\" }",
+                "{ \"type\": \"string\", \"pattern\": \"^0x[a-fA-F0-9]{40}$\" }",
                 null);
         Parameter isYes = new Parameter("isYes",
-                "{ \"Name\": \"isYes\", \"Type\": \"bool\" }",
+                "{ \"type\": \"boolean\" }",
                 null);
         List<Parameter> votedEventParams = new ArrayList<>();
         votedEventParams.add(owner);

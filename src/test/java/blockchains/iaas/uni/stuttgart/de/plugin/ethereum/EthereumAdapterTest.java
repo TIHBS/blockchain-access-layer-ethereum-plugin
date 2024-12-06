@@ -13,6 +13,7 @@ package blockchains.iaas.uni.stuttgart.de.plugin.ethereum;
 
 import blockchains.iaas.uni.stuttgart.de.api.model.LinearChainTransaction;
 import blockchains.iaas.uni.stuttgart.de.api.model.Parameter;
+import blockchains.iaas.uni.stuttgart.de.api.model.ResourceManagerSmartContract;
 import blockchains.iaas.uni.stuttgart.de.api.model.Transaction;
 import blockchains.iaas.uni.stuttgart.de.api.utils.PoWConfidenceCalculator;
 import blockchains.iaas.uni.stuttgart.de.plugin.ethereum.contracts.Permissions;
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.crypto.exception.CipherException;
@@ -67,6 +70,13 @@ class EthereumAdapterTest {
     @BeforeEach
     void init() throws CipherException, IOException {
         this.adapter = getAdapter();
+    }
+
+    @Test
+    void testRmscTypes() {
+        ResourceManagerSmartContract rmsc = adapter.getResourceManagerSmartContract();
+        Assertions.assertEquals(Address.class, EthereumTypeMapper.getEthereumType(rmsc.getAbortEvent().getOutputs().get(0).getType()));
+        Assertions.assertEquals(Utf8String.class, EthereumTypeMapper.getEthereumType(rmsc.getAbortEvent().getOutputs().get(1).getType()));
     }
 
     @Test
