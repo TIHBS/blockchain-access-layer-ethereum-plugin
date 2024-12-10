@@ -157,7 +157,8 @@ public class EthereumAdapter implements BlockchainAdapter {
                 EthGetTransactionReceipt receipt = web3j.ethGetTransactionReceipt(txHash).send();
 
                 if (!receipt.getResult().isStatusOK()) {
-                    if (handleDetectedState(transaction.getTransaction(), TransactionState.ERRORED, observedStates, result))
+                    log.error("error detected for tx: {}. Error message: {}", txHash, receipt.getResult().getRevertReason());
+                    if (handleDetectedState(transaction.getTransaction(), TransactionState.ERRORED, observedStates, result, receipt.getResult().getRevertReason()))
                         return;
                 }
 
@@ -666,6 +667,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                 .thenCompose(txReceipt -> subscribeForTxEvent(txReceipt.getTransactionHash(), waitFor,
                         TransactionState.CONFIRMED, TransactionState.NOT_FOUND, TransactionState.ERRORED))
                 .exceptionally((e) -> {
+                    log.error(e);
                     throw wrapEthereumExceptions(e);
                 });
     }
@@ -730,8 +732,15 @@ public class EthereumAdapter implements BlockchainAdapter {
     private static boolean handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,
                                                final TransactionState detectedState, final TransactionState[] interesting,
                                                CompletableFuture<Transaction> future) {
+        return handleDetectedState(transactionDetails, detectedState, interesting, future, null);
+    }
+
+    private static boolean handleDetectedState(final Optional<org.web3j.protocol.core.methods.response.Transaction> transactionDetails,
+                                               final TransactionState detectedState, final TransactionState[] interesting,
+                                               CompletableFuture<Transaction> future, String errorReason) {
         // Only complete the future if we are interested in this event
         if (Arrays.asList(interesting).contains(detectedState)) {
+
             final LinearChainTransaction result = new LinearChainTransaction();
             result.setState(detectedState);
             // it is important that this list is not null
@@ -742,7 +751,13 @@ public class EthereumAdapter implements BlockchainAdapter {
                 result.setFrom(transactionDetails.get().getFrom());
                 result.setTo(transactionDetails.get().getTo());
                 result.setTransactionHash(transactionDetails.get().getHash());
+
+                if (detectedState == TransactionState.ERRORED) {
+                    result.getReturnValues().add(new Parameter("error", "{\"type\": \"string\"}", errorReason));
+                }
+
                 result.setValue(transactionDetails.get().getValue());
+
             }
 
             future.complete(result);
