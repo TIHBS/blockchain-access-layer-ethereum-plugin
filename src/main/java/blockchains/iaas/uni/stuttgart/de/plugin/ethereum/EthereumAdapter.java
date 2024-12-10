@@ -415,6 +415,7 @@ public class EthereumAdapter implements BlockchainAdapter {
                                 Log logg = (Log) logResult.get();
                                 log.info("Analyzing log: {}", logg);
                                 Occurrence occurrence = this.handleLog(logg, event, outputParameters, filter);
+                                log.info("Log analysis result: {}", occurrence);
 
                                 if (occurrence != null) {
                                     finalResult.add(occurrence);
