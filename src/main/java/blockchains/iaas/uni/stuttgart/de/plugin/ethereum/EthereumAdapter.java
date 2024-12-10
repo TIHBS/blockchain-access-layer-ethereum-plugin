@@ -481,20 +481,25 @@ public class EthereumAdapter implements BlockchainAdapter {
                 .collect(Collectors.toList());
     }
 
-    private Occurrence handleLog(Log log, Event event, List<Parameter> outputParameters, String filter) throws Exception {
-        final EventValues values = Contract.staticExtractEventParameters(event, log);
+    private Occurrence handleLog(Log logg, Event event, List<Parameter> outputParameters, String filter) throws Exception {
+        final EventValues values = Contract.staticExtractEventParameters(event, logg);
+        log.info("Inside handleLog. EventValues.indexed={}, EventValues.nonIndexed={}", values.getIndexedValues(), values.getNonIndexedValues());
+        log.info("Inside handleLog. outputParameters={}", outputParameters);
         List<Parameter> parameters = new ArrayList<>();
 
         for (int i = 0; i < outputParameters.size(); i++) {
+            String theValue = ParameterDecoder.decode(values.getNonIndexedValues().get(i));
+            log.info("Inside handleLog. value for parameter:{}={}", i, theValue);
             parameters.add(Parameter.builder()
                     .name(outputParameters.get(i).getName())
                     .type(outputParameters.get(i).getType())
-                    .value(ParameterDecoder.decode(values.getNonIndexedValues().get(i)))
+                    .value(theValue)
                     .build());
         }
 
         if (BooleanExpressionEvaluator.evaluate(filter, parameters)) {
-            EthBlock block = this.web3j.ethGetBlockByHash(log.getBlockHash(), false).send();
+            log.info("Inside handleLog. filter evaluated to true");
+            EthBlock block = this.web3j.ethGetBlockByHash(logg.getBlockHash(), false).send();
             LocalDateTime timestamp = LocalDateTime.ofEpochSecond(block.getBlock().getTimestamp().longValue(), 0, ZoneOffset.UTC);
             String timestampS = formatter.format(timestamp);
 
